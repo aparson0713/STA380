@@ -1,0 +1,129 @@
+---
+title: "Wrangling the Billboard Top 100"
+author: "Biagio Alessandrello"
+date: "2024-08-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+library(dplyr)
+library(knitr)
+```
+
+
+Consider the data in [billboard.csv](../data/billboard.csv) containing every song to appear on the weekly [Billboard Top 100](https://www.billboard.com/charts/hot-100/) chart since 1958, up through the middle of 2021.  Each row of this data corresponds to a single song in a single week.  For our purposes, the relevant columns here are:
+
+- performer: who performed the song
+- song: the title of the song
+- year: year (1958 to 2021)
+- week: chart week of that year (1, 2, etc)
+- week_position: what position that song occupied that week on the Billboard top 100 chart.
+
+ Use your skills in data wrangling and plotting to answer the following three questions. 
+
+
+```{r Pull Data Set, include=FALSE}
+billboard <- read.csv("billboard.csv")
+head(billboard)
+trimmed_billboard <- select(billboard, performer, song, year, week, week_position)
+head(trimmed_billboard)
+```
+
+
+__Part A__:  Make a table of the top 10 most popular songs since 1958, as measured by the _total number of weeks that a song spent on the Billboard Top 100._  Note that these data end in week 22 of 2021, so the most popular songs of 2021 will not have up-to-the-minute data; please send our apologies to The Weeknd.    
+
+Your table should have __10 rows__ and __3 columns__: `performer`, `song`, and `count`, where `count` represents the number of weeks that song appeared in the Billboard Top 100.  Make sure the entries are sorted in descending order of the `count` variable, so that the more popular songs appear at the top of the table.  Give your table a short caption describing what is shown in the table.  
+
+(_Note_: you'll want to use both `performer` and `song` in any `group_by` operations, to account for the fact that multiple unique songs can share the same title.)  
+
+
+```{r Top 10 Most Popular Songs Since 1958, include=FALSE}
+top_songs <- trimmed_billboard %>%
+  group_by(performer, song) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(10)
+```
+
+```{r Table of Top 10 Most Popular Songs Since 1958, echo=FALSE}
+kable(top_songs, caption = "The 10 Most Popular Songs on Billboard Top 100 (1958-2021*)")
+```
+
+
+__Part B__: Is the "musical diversity" of the Billboard Top 100 changing over time?  Let's find out.  We'll measure the musical diversity of given year as _the number of unique songs that appeared in the Billboard Top 100 that year._  Make a line graph that plots this measure of musical diversity over the years.  The x axis should show the year, while the y axis should show the number of unique songs appearing at any position on the Billboard Top 100 chart in any week that year.  For this part, please filter the data set so that it excludes the years 1958 and 2021, since we do not have complete data on either of those years.   Give the figure an informative caption in which you explain what is shown in the figure and comment on any interesting trends you see.  
+
+There are number of ways to accomplish the data wrangling here.  For example, you could use two distinct sets of data-wrangling steps.  The first set of steps would get you a table that counts the number of times that a given song appears on the Top 100 in a given year.  The second set of steps operate on the result of the first set of steps; it would count the number of unique songs that appeared on the Top 100 in each year, _irrespective of how many times_ it had appeared.
+
+
+```{r Musical Diversity overtime, echo=FALSE}
+
+# Removing the years 1958 and 2021 from the dataset
+billboard_filtered <- trimmed_billboard %>% filter(year != 1958 & year != 2021)
+
+# Count the number of unique songs appearing in the Billboard Top 100 each year
+unique_songs_per_year <- billboard_filtered %>% group_by(year) %>% summarize(unique_songs = n_distinct(song))
+
+# Plot the data
+ggplot(unique_songs_per_year, aes(x = year, y = unique_songs)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(
+    title = "Musical Diversity of the Billboard Top 100 Over Time",
+    x = "Year",
+    y = "Number of Unique Songs",
+    caption = "Figure shows the number of unique songs appearing in the Billboard Top 100 each year, excluding 1958 and 2021."
+  ) +
+  theme_minimal()
+
+```
+
+
+__Part C__: Let's define a "ten-week hit" as a single song that appeared on the Billboard Top 100 for at least ten weeks.  There are 19 artists in U.S. musical history since 1958 who have had _at least 30 songs_ that were "ten-week hits."  Make a bar plot for these 19 artists, showing how many ten-week hits each one had in their musical career.   Give the plot an informative caption in which you explain what is shown.
+
+_Notes_:  
+
+1) You might find this easier to accomplish in two distinct sets of data wrangling steps.
+2) Make sure that the individuals names of the artists are readable in your plot, and that they're not all jumbled together.  If you find that your plot isn't readable with vertical bars, you can add a `coord_flip()` layer to your plot to make the bars (and labels) run horizontally instead.
+3) By default a bar plot will order the artists in alphabetical order.  This is acceptable to turn in.  But if you'd like to order them according to some other variable, you can use the `fct_reorder` function, described in [this blog post](https://datavizpyr.com/re-ordering-bars-in-barplot-in-r/).  This is optional.
+
+
+```{r Ten Week Hits, include=FALSE}
+
+# Identify ten-week hits
+ten_week_hits <- trimmed_billboard %>%
+  group_by(performer, song) %>%
+  summarize(total_weeks = n()) %>%
+  filter(total_weeks >= 10)
+
+# Count ten-week hits per artist
+artist_hit_counts <- ten_week_hits %>%
+  group_by(performer) %>%
+  summarize(ten_week_hits_count = n()) %>%
+  arrange(desc(ten_week_hits_count))
+
+# Filter for artists with at least 30 ten-week hits
+top_artists <- artist_hit_counts %>%
+  filter(ten_week_hits_count >= 30) %>%
+  top_n(19, ten_week_hits_count)
+
+```
+
+
+```{r Plot Ten Week Hits, echo=FALSE}
+# Plot the data
+ggplot(top_artists, aes(x = fct_reorder(performer, ten_week_hits_count), y = ten_week_hits_count)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  coord_flip() +
+  labs(
+    title = "Number of Ten-Week Hits by Top 19 Artists",
+    x = "Artist",
+    y = "Number of Ten-Week Hits",
+    caption = "Hits for the 19 artists with 30+ songs that appeared on the Billboard Top 100 for at least ten weeks."
+  ) +
+  theme_minimal()
+
+```

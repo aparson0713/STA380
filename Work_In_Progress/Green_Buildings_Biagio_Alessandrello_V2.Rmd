@@ -1,0 +1,300 @@
+---
+title: "Visual Story Telling: Green Buildings"
+author: "Biagio Alessandrello"
+date: "2024-08-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+library(dplyr)
+library(knitr)
+```
+
+## Visual story telling part 1: green buildings
+
+### The case  
+
+Over the past decade, both investors and the general public have paid increasingly close attention to the benefits of environmentally conscious buildings. There are both ethical and economic forces at work here.  In commercial real estate, issues of eco-friendliness are intimately tied up with ordinary decisions about how to allocate capital. In this context, the decision to invest in eco-friendly buildings could pay off in at least four ways.  
+
+1. Every building has the obvious list of recurring costs: water, climate control, lighting, waste disposal, and so forth. Almost by definition, these costs are lower in green buildings.  
+2. Green buildings are often associated with better indoor environments—the kind that are full of sunlight, natural materials, and various other humane touches. Such environments, in turn, might result in higher employee productivity and lower absenteeism, and might therefore be more coveted by potential tenants. The financial impact of this factor, however, is rather hard to quantify ex ante; you cannot simply ask an engineer in the same way that you could ask a question such as, “How much are these solar panels likely to save on the power bill?”  
+3. Green buildings make for good PR. They send a signal about social responsibility and ecological awareness, and might therefore command a premium from potential tenants who want their customers to associate them with these values. It is widely believed that a good corporate image may enable a firm to charge premium prices, to hire better talent, and to attract socially conscious investors.  
+4. Finally, sustainable buildings might have longer economically valuable lives. For one thing, they are expected to last longer, in a direct physical sense. (One of the core concepts of the green-building movement is “life-cycle analysis,” which accounts for the high front-end environmental impact of ac- quiring materials and constructing a new building in the first place.) Moreover, green buildings may also be less susceptible to market risk—in particular, the risk that energy prices will spike, driving away tenants into the arms of bolder, greener investors.  
+
+Of course, much of this is mere conjecture. At the end of the day, tenants may or may not be willing to pay a premium for rental space in green buildings. We can only find out by carefully examining data on the commercial real-estate market.  
+
+The file [greenbuildings.csv](../data/greenbuildings.csv) contains data on 7,894 commercial rental properties from across the United States. Of these, 685 properties have been awarded either LEED or EnergyStar certification as a green building. You can easily find out more about these rating systems on the web, e.g. at www.usgbc.org. The basic idea is that a commercial property can receive a green certification if its energy efficiency, carbon footprint, site selection, and building materials meet certain environmental benchmarks, as certified by outside engineers.
+
+A group of real estate economists constructed the data in the following way.  Of the 1,360 green-certified buildings listed as of December 2007 on the LEED or EnergyStar websites, current information about building characteristics and monthly rents were available for 685 of them.  In order to provide a control population, each of these 685 buildings was matched to a cluster of nearby commercial buildings in the CoStar database.  Each small cluster contains one green-certified building, and all non-rated buildings within a quarter-mile radius of the certified building.  On average, each of the 685 clusters contains roughly 12 buildings, for a total of 7,894 data points.
+
+The columns of the data set are coded as follows:
+
+- CS.PropertyID:  the building's unique identifier in the CoStar database.  
+- cluster:  an identifier for the building cluster, with each cluster containing one green-certified building and at least one other non-green-certified building within a quarter-mile radius of the cluster center.  
+- size:  the total square footage of available rental space in the building.  
+- empl.gr:  the year-on-year growth rate in employment in the building's geographic region.  
+- Rent:  the rent charged to tenants in the building, in dollars per square foot per calendar year.  
+- leasing.rate:  a measure of occupancy; the fraction of the building's available space currently under lease.  
+- stories:  the height of the building in stories.  
+- age:  the age of the building in years.  
+- renovated:  whether the building has undergone substantial renovations during its lifetime.  
+- class.a, class.b:  indicators for two classes of building quality (the third is Class C).  These are relative classifications within a specific market.  Class A buildings are generally the highest-quality properties in a given market.  Class B buildings are a notch down, but still of reasonable quality.  Class C buildings are the least desirable properties in a given market.  
+- green.rating:  an indicator for whether the building is either LEED- or EnergyStar-certified.  
+- LEED, Energystar:  indicators for the two specific kinds of green certifications.  
+- net:  an indicator as to whether the rent is quoted on a "net contract" basis.  Tenants with net-rental contracts pay their own utility costs, which are otherwise included in the quoted rental price.  
+- amenities:  an indicator of whether at least one of the following amenities is available on-site: bank, convenience store, dry cleaner, restaurant, retail shops, fitness center.  
+- cd.total.07:  number of cooling degree days in the building's region in 2007.  A degree day is a measure of demand for energy; higher values mean greater demand.  Cooling degree days are measured relative to a baseline outdoor temperature, below which a building needs no cooling.  
+- hd.total07:  number of heating degree days in the building's region in 2007.  Heating degree days are also measured relative to a baseline outdoor temperature, above which a building needs no heating.  
+- total.dd.07:  the total number of degree days (either heating or cooling) in the building's region in 2007.  
+- Precipitation:  annual precipitation in inches in the building's geographic region.
+- Gas.Costs:  a measure of how much natural gas costs in the building's geographic region.  
+- Electricity.Costs:  a measure of how much electricity costs in the building's geographic region.  
+- cluster.rent:  a measure of average rent per square-foot per calendar year in the building's local market.  
+
+### The goal
+
+An Austin real-estate developer is interested in the possible economic impact of "going green" in her latest project: a new 15-story mixed-use building on East Cesar Chavez, just across I-35 from downtown.  Will investing in a green building be worth it, from an economic perspective?  The baseline construction costs are $100 million, with a 5% expected premium for green certification.
+
+The developer has had someone on her staff, who's been described to her as a "total Excel guru from his undergrad statistics course," run some numbers on this data set and make a preliminary recommendation.  Here's how this person described his process.
+
+>I began by cleaning the data a little bit.  In particular, I noticed that a handful of the buildings in the data set had very low occupancy rates (less than 10\% of available space occupied).  I decided to remove these buildings from consideration, on the theory that these buildings might have something weird going on with them, and could potentially distort the analysis.  Once I scrubbed these low-occupancy buildings from the data set, I looked at the green buildings and non-green buildings separately.  The median market rent in the non-green buildings was $25 per square foot per year, while the median market rent in the green buildings was $27.60 per square foot per year: about $2.60 more per square foot.  (I used the median rather than the mean, because there were still some outliers in the data, and the median is a lot more robust to outliers.)  Because our building would be 250,000 square feet, this would translate into an additional 250000 x 2.6 = $650000 of extra revenue per year if we build the green building.
+
+>Our expected baseline construction costs are $100 million, with a 5% expected premium for green certification.  Thus we should expect to spend an extra $5 million on the green building.  Based on the extra revenue we would make, we would recuperate these costs in $5000000/650000 = 7.7 years.  Even if our occupancy rate were only 90%, we would still recuperate the costs in a little over 8 years.  Thus from year 9 onwards, we would be making an extra $650,000 per year in profit.  Since the building will be earning rents for 30 years or more, it seems like a good financial move to build the green building.
+
+
+The developer listened to this recommendation, understood the analysis, and still felt unconvinced.  She has therefore asked you to revisit the report, so that she can get a second opinion.
+
+Do you agree with the conclusions of her on-staff stats guru?  If so, point to evidence supporting his case.  If not, explain specifically where and why the analysis goes wrong, and how it can be improved.  Do you see the possibility of confounding variables for the relationship between rent and green status?  If so, provide evidence for confounding, and see if you can also make a picture that visually shows how we might "adjust" for such a confounder.    _Tell your story in pictures, with appropriate introductory and supporting text._  
+
+Note: this is intended as an exercise in visual and numerical story-telling. Your approach should rely on pictures and/or tables, not a regression model.  Tell a story understandable to a non-technical audience.  Keep it concise.  
+
+```{r Pull Data, echo=FALSE}
+green <- read.csv("greenbuildings.csv")
+head(green)
+
+df_filtered <- green %>% filter(leasing_rate >= 10)
+head(df_filtered)
+
+green_only <- df_filtered %>% filter(green_rating == 1)
+
+notgreen_only <- df_filtered %>% filter(green_rating != 1)
+
+median_rent_green <- median(green_only$Rent)
+
+median_rent_nongreen <- median(notgreen_only$Rent)
+
+cat("Median Rent for Green Buildings:", median_rent_green, "\n")
+
+cat("Median Rent for Non Green Buildings:", median_rent_nongreen, "\n")
+
+difference_rent <- median_rent_green - median_rent_nongreen
+
+cat("Difference in rents:", difference_rent, "\n")
+
+building_sq <- 250000
+
+extra_rev_green <- building_sq * difference_rent
+
+cat("Extra Total Rent if green on 250K sqft:", extra_rev_green, "\n")
+```
+
+```{r}
+
+# Load necessary packages
+library(dplyr)
+library(ggplot2)
+
+# Load the dataset
+green <- read.csv("greenbuildings.csv")
+
+# Quick view of the dataset
+head(green)
+
+# Summary statistics
+summary(green)
+
+# Compare average rent between green and non-green buildings
+green_summary <- green %>%
+  group_by(green_rating) %>%
+  summarize(mean_rent = mean(Rent, na.rm = TRUE), 
+            median_rent = median(Rent, na.rm = TRUE),
+            mean_occupancy = mean(leasing_rate, na.rm = TRUE))
+
+print(green_summary)
+
+# Regression analysis to assess the impact of green certification on rent
+rent_model <- lm(Rent ~ green_rating + size + age + leasing_rate + class_a + class_b, data = green)
+summary(rent_model)
+
+# Visualize the regression results
+ggplot(green, aes(x = green_rating, y = Rent)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Impact of Green Certification on Rent",
+       x = "Green Rating", y = "Rent ($ per square foot)")
+```
+
+```{r visualizations, echo=FALSE}
+# Histogram
+ggplot(green, aes(x = Rent, fill = factor(green_rating))) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+  labs(title = "Distribution of Rent: Green vs Non-Green Buildings",
+       x = "Rent ($ per square foot)",
+       fill = "Green Rating") +
+  theme_minimal()
+
+# Boxplot to compare rent distributions
+ggplot(green, aes(x = factor(green_rating), y = Rent)) +
+  geom_boxplot() +
+  labs(title = "Rent Distribution: Green vs Non-Green Buildings",
+       x = "Green Rating", y = "Rent ($ per square foot)")
+
+# Visualize the regression results
+ggplot(green, aes(x = green_rating, y = Rent)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Impact of Green Certification on Rent",
+       x = "Green Rating", y = "Rent ($ per square foot)")
+
+# Density Plots
+ggplot(green, aes(x = Rent, fill = factor(green_rating))) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Rent: Green vs Non-Green Buildings",
+       x = "Rent ($ per square foot)",
+       fill = "Green Rating") +
+  theme_minimal()
+
+# Scatter Plots
+ggplot(green, aes(x = size, y = Rent, color = factor(green_rating))) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Rent vs. Building Size",
+       x = "Building Size (square feet)",
+       y = "Rent ($ per square foot)",
+       color = "Green Rating") +
+  theme_minimal()
+
+# Facets Grids
+ggplot(green, aes(x = size, y = Rent)) +
+  geom_point(alpha = 0.6) +
+  facet_grid(. ~ green_rating) +
+  labs(title = "Rent vs. Building Size Faceted by Green Rating",
+       x = "Building Size (square feet)",
+       y = "Rent ($ per square foot)") +
+  theme_minimal()
+
+# Correlation Matrix
+library(corrplot)
+
+# Select relevant numeric columns for correlation
+numeric_data <- green %>%
+  select(Rent, size, age, leasing_rate, Electricity_Costs, Gas_Costs)
+
+# Calculate correlation matrix
+cor_matrix <- cor(numeric_data, use = "complete.obs")
+
+# Plot the correlation matrix
+corrplot(cor_matrix, method = "circle", type = "lower", 
+         title = "Correlation Matrix of Key Variables",
+         mar = c(0, 0, 1, 0))
+
+# Violin Plots
+ggplot(green, aes(x = factor(green_rating), y = Rent, fill = factor(green_rating))) +
+  geom_violin() +
+  labs(title = "Distribution of Rent by Green Rating",
+       x = "Green Rating",
+       y = "Rent ($ per square foot)",
+       fill = "Green Rating") +
+  theme_minimal()
+
+# Boxplots by Region
+# Filter to get the top 10 clusters by average rent
+top_clusters_by_rent <- green %>%
+  group_by(cluster) %>%
+  summarize(mean_rent = mean(Rent, na.rm = TRUE)) %>%
+  top_n(10, mean_rent) %>%
+  pull(cluster)
+
+# Filter the data to include only these top clusters
+green_top_clusters_by_rent <- green %>%
+  filter(cluster %in% top_clusters_by_rent)
+
+# Create the boxplot
+ggplot(green_top_clusters_by_rent, aes(x = factor(cluster), y = Rent, fill = factor(green_rating))) +
+  geom_boxplot() +
+  labs(title = "Rent by Top 10 Clusters (by Average Rent) and Green Rating",
+       x = "Cluster",
+       y = "Rent ($ per square foot)",
+       fill = "Green Rating") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# Time Series Plots
+ggplot(green, aes(x = age, y = Rent, color = factor(green_rating))) +
+  geom_line() +
+  labs(title = "Trend in Rent Over Time by Green Rating",
+       x = "Age",
+       y = "Rent ($ per square foot)",
+       color = "Green Rating") +
+  theme_minimal()
+```
+
+```{r Sensitivity Analysis, echo=FALSE}
+
+# Sensitivity Analysis: Vary Occupancy Rate
+occupancy_rates <- seq(0.7, 1, by = 0.1)
+
+# Calculate the extra revenue for each occupancy rate
+extra_revenue <- sapply(occupancy_rates, function(occupancy) {
+  building_sq * difference_rent * occupancy
+})
+
+# Calculate payback periods for each scenario
+payback_periods <- 5e6 / extra_revenue
+
+# Create a data frame for plotting
+sensitivity_df <- data.frame(occupancy_rate = occupancy_rates,
+                             extra_revenue = extra_revenue,
+                             payback_period = payback_periods)
+
+# Plotting the Sensitivity Analysis
+ggplot(sensitivity_df, aes(x = occupancy_rate, y = payback_period)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Sensitivity Analysis: Payback Period vs Occupancy Rate",
+       x = "Occupancy Rate",
+       y = "Payback Period (Years)") +
+  theme_minimal()
+
+```
+
+```{r Confounding Variables Visualization, echo=FALSE}
+
+# Stratified Scatter Plot by Building Size
+ggplot(green, aes(x = size, y = Rent, color = factor(green_rating))) +
+  geom_point(alpha = 0.6) +
+  facet_wrap(~class_a + class_b, scales = "free") +
+  labs(title = "Rent vs. Building Size Stratified by Class and Green Rating",
+       x = "Building Size (square feet)",
+       y = "Rent ($ per square foot)",
+       color = "Green Rating") +
+  theme_minimal()
+
+```
+## Non-Financial Benefits of Green Buildings
+
+### 1. **Operational Cost Savings**: 
+   - Green buildings typically have lower utility costs due to energy-efficient systems, which can reduce overhead in the long term.
+   
+### 2. **Improved Tenant Satisfaction**:
+   - Enhanced indoor environments can lead to higher tenant satisfaction and lower turnover rates, indirectly increasing the building’s value.
+   
+### 3. **Corporate Social Responsibility (CSR)**:
+   - A green certification can enhance the building’s and tenants’ reputation, potentially attracting premium tenants willing to pay higher rents.
+
+### 4. **Longer Building Lifespan**:
+   - With sustainable materials and energy-efficient designs, green buildings are likely to have a longer lifespan, reducing the need for costly renovations.

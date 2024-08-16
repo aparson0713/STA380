@@ -1,0 +1,70 @@
+---
+title: "Probability Practice Assignment"
+author: "Biagio Alessandrello"
+date: "2024-08-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R Probability Practice
+
+__Part A.__ Visitors to your website are asked to answer a single survey question before they get access to the content on the page. Among all of the users, there are two categories: Random Clicker (RC), and Truthful Clicker (TC). There are two possible answers to the survey: yes and no. Random clickers would click either one with equal probability. You are also giving the information that the expected fraction of random clickers is 0.3.  After a trial period, you get the following survey results: 65\% said Yes and 35\% said No.   What fraction of people who are truthful clickers answered yes?  Hint: use the rule of total probability.  
+
+-------
+1. Define the probabilities and given data:
+- P(RC) = 0.3 #Random Clickers
+- P(TC) = 1 - P(RC) = 0.7 #Truthful Clickers
+- P(Yes|RC) = 0.5
+- (Yes) = 0.65
+2. Rule of total probability (What fraction of people who are truthful clickers answered yes)
+$$ P(A) = \sum_{i=1}^n P(A|B_i)P(B_i)$$ 
+$$P(Yes) = P(Yes|RC)P(RC) + P(Yes|TC)P(TC)$$
+- 0.65 = (0.5 * 0.3) + P(Yes|TC) * 0.7
+- 0.65 = 0.15 + P(Yes|TC) * 0.7
+- 0.50 = P(Yes|TC) * 0.7
+- P(Yes|TC) = 0.7143
+
+Fraction of people who are truthful clickers that answered yes is 71.43%
+
+__Part B.__ Imagine a medical test for a disease with the following two attributes:  
+
+- The sensitivity is about 0.993. That is, if someone has the disease, there is a probability of 0.993 that they will test positive.  
+- The specificity is about 0.9999. This means that if someone doesn't have the disease, there is probability of 0.9999 that they will test negative.  
+- In the general population, incidence of the disease is reasonably rare: about 0.0025% of all people have it (or 0.000025 as a decimal probability).
+
+Suppose someone tests positive. What is the probability that they have the disease?  
+
+1. Define the probabilities and given data:
+- P(Positive Test|Has Disease) = 0.993
+- P(Negative Test|Doesn't Have Disease).= 0.9999
+- P(Has Disease) = 0.000025
+- P(Doesn't Have Disease) = 1 - P(Has Disease) = 0.999975
+2. What is the probability that hey have the disease if the person tests positive?
+$$P(Has Disease|Positive Test)$$
+$$P(\text{Has Disease}|\text{Positive Test}) = \frac{P(\text{Positive Test}|\text{Has Disease}) \cdot P(\text{Has Disease})}{P(\text{Positive Test})}$$ 
+- First find P(Positive Test) using rule of total probabilities
+$$ P(\text{Positive Test}) = P(\text{Positive Test}|\text{Has Disease}) \cdot P(\text{Has Disease}) + P(\text{Positive Test}|\text{Doesnt Have Disease}) \cdot P(\text{Doesnt Have Disease}) $$
+-   P(Positive Test) = 0.0001248
+- Use Bayes Theorem
+-   P(Has Disease|Positive Test) = 0.1988
+
+The probability that a person who tested positive actually has the disease is around 19.88%
+
+```{r Math, include=FALSE}
+p_positive_test_has_disease = 0.993
+p_negative_test_no_disease = 0.9999
+p_has_disease = 0.000025
+p_no_disease = 1 - p_has_disease
+p_positive_test = p_positive_test_has_disease * p_has_disease + (1 - p_negative_test_no_disease) * p_no_disease
+p_has_disease_positive_test = (p_positive_test_has_disease * p_has_disease) / p_positive_test
+```
+
+
+
+
+
+
+
