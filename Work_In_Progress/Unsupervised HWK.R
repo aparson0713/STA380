@@ -5,7 +5,7 @@ library("dplyr")
 library("ggplot2")
 
 
-df <- read.csv("/Users/alexparson/Documents/UT MSBA 2025/STA 380/Unsupervised Learning/greenbuildings.csv")
+df <- read.csv("aparson0713/STA380/data/greenbuildings.csv")
 glimpse(df)
 
 column_names <- names(df)
