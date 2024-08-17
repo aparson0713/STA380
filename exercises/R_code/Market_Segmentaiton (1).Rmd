@@ -1,0 +1,324 @@
+---
+title: "Market_Segmentation"
+author: "Haden Loveridge, Alex Parson, Biagio Alessandrello"
+date: "2024-08-13"
+output: 
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loading, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Load necessary libraries
+library(dplyr)
+library(readr)
+library(knitr)
+library(kableExtra)
+
+# Read the data from the CSV file
+social_data <- read_csv("~/Desktop/Machine_Learning_Intro/David_Puelz_SecondHalf/Excersises/data/social_marketing.csv")
+```
+```{r scale, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Standardize the data
+user_column <- social_data$`...1`
+social_data_scaled <- as_tibble(scale(select(social_data, -`...1`)))
+social_data_scaled <- bind_cols(`...1` = user_column, social_data_scaled)
+```
+
+To create market segments we first scaled all variables around 0. We then itterated through 3 clusters to 8 and compared which clusters had significantly high values (creater than or less than 1, indicating that it is at least one standard deviation away from the average content).  
+
+For each cluster if no column is specified, then no attributes showed significance. The numbers in parenthesis show the value in standard deviations for that cluster. Next to the number of the cluster we can also see the number of followers in that cluster. For example, 'Cluster 3 (538): ' means that cluster 3 has 538 followers.  
+
+
+## 3 Clusters
+```{r clustering 3, echo=FALSE, message=FALSE, warning= FALSE}
+# Scale the data excluding the '...1' (User) column
+social_data_scaled <- social_data %>%
+  mutate(across(-`...1`, scale))
+
+# Perform k-means clustering with 5 clusters
+set.seed(123)  # Setting a seed for reproducibility
+kmeans_result <- kmeans(select(social_data_scaled, -`...1`), centers = 3, nstart = 25)
+
+# Add the cluster assignments to the data
+social_data_scaled <- social_data_scaled %>%
+  mutate(Cluster = kmeans_result$cluster)
+```
+
+```{r clustering view 3, include=FALSE, message=FALSE, warning= FALSE}
+# Calculate mean values of features for each cluster
+cluster_means <- social_data_scaled %>%
+  group_by(Cluster) %>%
+  summarise(across(everything(), mean))
+
+print(cluster_means)
+```
+cluster 1:  
+cluster 2:  
+cluster 3: sports_fandom (1.9), food (1.79), family (1.42), religion (2.2), parenting(2.05), school (1.61)  
+
+## 5 Clusters
+```{r clustering 5, echo=FALSE, message=FALSE, warning= FALSE}
+# Scale the data excluding the '...1' (User) column
+social_data_scaled <- social_data %>%
+  mutate(across(-`...1`, scale))
+
+# Perform k-means clustering with 5 clusters
+set.seed(123)  # Setting a seed for reproducibility
+kmeans_result <- kmeans(select(social_data_scaled, -`...1`), centers = 5, nstart = 25)
+
+# Add the cluster assignments to the data
+social_data_scaled <- social_data_scaled %>%
+  mutate(Cluster = kmeans_result$cluster)
+```
+
+```{r clustering view 5, include=FALSE, message=FALSE, warning= FALSE}
+# Calculate mean values of features for each cluster
+cluster_means <- social_data_scaled %>%
+  group_by(Cluster) %>%
+  summarise(across(everything(), mean))
+
+print(cluster_means)
+```
+
+cluster 1: high travel (1.85), high politics (2.433), high news (1.93), high computers (1.64), high automotive (1.07)
+cluster 2:
+cluster 3: high health_nutriciton (2.157), high outdoors (1.66), high personal_fitness (2.12),
+cluster 4:
+cluster 5: high sports_fandom (2.05), high food (1.82), high family (1.5), high religion (2.26), high parenting (2.122), high school (1.658)
+
+```{r clustering 4, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Scale the data excluding the '...1' (User) column
+social_data_scaled <- social_data %>%
+  mutate(across(-`...1`, scale))
+
+# Perform k-means clustering with 5 clusters
+set.seed(123)  # Setting a seed for reproducibility
+kmeans_result <- kmeans(select(social_data_scaled, -`...1`), centers = 4, nstart = 25)
+
+# Add the cluster assignments to the data
+social_data_scaled <- social_data_scaled %>%
+  mutate(Cluster = kmeans_result$cluster)
+```
+
+```{r clustering view 4, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Calculate mean values of features for each cluster
+cluster_means <- social_data_scaled %>%
+  group_by(Cluster) %>%
+  summarise(across(everything(), mean))
+
+print(cluster_means)
+
+#cluster 1:
+#cluster 2: travel (1.7), politics (2.38), news (1.9), computers (1.5), automotive (1.1)
+#cluster 3:
+#cluster 4: sports fandom (2.02), food (1.81), family (1.4), religion (2.22), parenting (2.1), school (1.6)
+```
+
+
+```{r clustering 6, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Scale the data excluding the '...1' (User) column
+social_data_scaled <- social_data %>%
+  mutate(across(-`...1`, scale))
+
+# Perform k-means clustering with 5 clusters
+set.seed(123)  # Setting a seed for reproducibility
+kmeans_result <- kmeans(select(social_data_scaled, -`...1`), centers = 6, nstart = 25)
+
+# Add the cluster assignments to the data
+social_data_scaled <- social_data_scaled %>%
+  mutate(Cluster = kmeans_result$cluster)
+```
+
+```{r clustering view 6, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Calculate mean values of features for each cluster
+# Calculate mean values of features for each cluster
+cluster_means <- social_data_scaled %>%
+  group_by(Cluster) %>%
+  summarise(across(everything(), mean))
+
+# Count the number of people in each cluster
+cluster_counts <- social_data_scaled %>%
+  count(Cluster)
+
+print(cluster_counts)
+
+print(cluster_means)
+
+# cluster 1 (574): photo sharing (1.2), cooking (2.57), beauty (2.389), fashion (2.5)
+# cluster 2 (764): sport fandom (1.98), food (1.7), family (1.44), religion (2.17), parenting (2.06), school (1.63), 
+# cluster 3 (429): online gaming (3.16), college_uni (3.11), sports_playing (2.02)
+# cluster 4 (682): travel (1.7), politics (2.3), news (1.96), computers (1.55), automotive (1.11)
+# cluster 5 (888): health_nutrition (2.1), outdoors (1.62), personal_fitness (2.07)
+# cluster 6 (4545): 
+```
+
+## 7 Clusters
+```{r clustering 7, echo=FALSE, message=FALSE, warning= FALSE}
+# Scale the data excluding the '...1' (User) column
+social_data_scaled <- social_data %>%
+  mutate(across(-`...1`, scale))
+
+# Perform k-means clustering with 5 clusters
+set.seed(123)  # Setting a seed for reproducibility
+kmeans_result <- kmeans(select(social_data_scaled, -`...1`), centers = 7, nstart = 25)
+
+# Add the cluster assignments to the data
+social_data_scaled <- social_data_scaled %>%
+  mutate(Cluster = kmeans_result$cluster)
+```
+
+```{r clustering view 7, include=FALSE, message=FALSE, warning= FALSE}
+# Calculate mean values of features for each cluster
+cluster_means <- social_data_scaled %>%
+  group_by(Cluster) %>%
+  summarise(across(everything(), mean))
+
+# Count the number of people in each cluster
+cluster_counts <- social_data_scaled %>%
+  count(Cluster)
+
+print(cluster_counts)
+
+print(cluster_means)
+```
+
+cluster 1 (805): health_nutrition (2.19), outdoors (1.72), personal_fitness (2.16)  
+cluster 2 (3583):  
+cluster 3 (517): photo_sharing (1.2), cooking (2.77), beauty (2.55), fashion (2.65)  
+cluster 4 (706): sports_fandom (2.08), food (1.84), family (1.5), religion (2.65), parenting (2.16), school (1.68)  
+cluster 5 (1280): chatter (1.2), shopping (1.09)  
+cluster 6 (620): travel (1.91), politics (2.49), news(1.99), computers (1.68), automotive (1.05)  
+cluster 7 (371): online_gaming (3.5), college_uni (3.2), sports_playing (2.17)  
+
+## 8 Clusters
+```{r clustering 8, echo=FALSE, message=FALSE, warning= FALSE}
+# Scale the data excluding the '...1' (User) column
+social_data_scaled <- social_data %>%
+  mutate(across(-`...1`, scale))
+
+# Perform k-means clustering with 5 clusters
+set.seed(123)  # Setting a seed for reproducibility
+kmeans_result <- kmeans(select(social_data_scaled, -`...1`), centers = 8, nstart = 25)
+
+# Add the cluster assignments to the data
+social_data_scaled <- social_data_scaled %>%
+  mutate(Cluster = kmeans_result$cluster)
+```
+
+```{r clustering view 8, include=FALSE, message=FALSE, warning= FALSE}
+# Calculate mean values of features for each cluster
+cluster_means <- social_data_scaled %>%
+  group_by(Cluster) %>%
+  summarise(across(everything(), mean))
+
+# Count the number of people in each cluster
+cluster_counts <- social_data_scaled %>%
+  count(Cluster)
+
+print(cluster_counts)
+
+print(cluster_means)
+```
+
+cluster 1 (617): travel (1.9), politics (2.49), news (2.00), computers (1.67), automotive (1.05)  
+cluster 2 (513): photo_sharing(1.21), cooking (2.78), beauty (2.56), fashion (2.65)  
+cluster 3 (1270): chatter (1.21), shopping (1.12)  
+cluster 4 (801): health_nutrition (2.19), outdoors (1.72), personal_fitness (2.16)  
+cluster 5 (703): sports_fandom (2.01), food (1.84), family (1.5), religion (2.25), parenting (2.14), school (1.67)  
+cluster 6 (49): spam (12.4), adult (3.75)  
+cluster 7 (3561):  
+cluster 8 (368): online_gaming(3.5), college_uni (3.28), sports_playing (2.18)  
+
+Irelevant Columns: current_events, uncategorized, tv_film, home_and_garden, eco, business, crafts, art, dating, small_business  
+
+## Final Findings:
+We can see that of the 8 clusters, cluster 7 seems to have no significance, but it is the bulk of the followers. Cluster 6 is the spam accounts that don't provide insights. The other 6 clusters are true customer groups. For example, cluster 8 shows that we have a distinct group of followers that are into online gaming, college university, and playing sports. This group could be college students. Cluster 2 has 617 people that are very active about travel, politics, news, computers, and automotive. This group could be grandparents. Each group could also be classified as cluster 2 - Moms, 3- women, 4, healthy people, 5- dads, 6- junk / robots, 7- noise, 8- college students
+
+```{r, include=FALSE}
+library(tidyr)
+library(ggplot2)
+
+# Calculate the y-axis limit based on all clusters except Cluster 6
+y_limit <- cluster_means %>%
+  filter(Cluster != 6) %>%
+  select(-Cluster) %>%
+  summarise(max_value = max(across(everything()))) %>%
+  pull(max_value)
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning= FALSE}
+library(tidyr)
+library(ggplot2)
+
+# Calculate the y-axis limit based on all clusters except Cluster 6
+y_limit <- cluster_means %>%
+  filter(Cluster != 6) %>%
+  select(-Cluster) %>%
+  summarise(max_value = max(across(everything()))) %>%
+  pull(max_value)
+
+# Get the original order of the categories (column names) except for 'Cluster'
+original_order <- names(cluster_means)[-1]
+
+plot_list <- list()
+
+for (i in 1:8) {
+  cluster_means_i <- cluster_means %>%
+    filter(Cluster == i) %>%
+    pivot_longer(cols = -Cluster, names_to = "Category", values_to = "Average") %>%
+    mutate(Category = factor(Category, levels = original_order))
+  
+  p <- ggplot(cluster_means_i, aes(x = Category, y = Average, fill = ifelse(Average > 1, "Above 1", "1 or Below"))) +
+    geom_bar(stat = "identity") +
+    coord_flip() +
+    labs(title = paste("Average Values in Cluster", i), x = "Category", y = "Average") +
+    theme_minimal() +
+    scale_fill_manual(values = c("Above 1" = "red", "1 or Below" = "gray"))
+  
+  # Apply the y-axis limit for all clusters except Cluster 6
+  if (i != 6) {
+    p <- p + ylim(0, y_limit)
+  }
+  
+  plot_list[[i]] <- p
+}
+
+# Print all plots
+for (p in plot_list) {
+  print(p)
+}
+
+# Optionally, save all plots to a PDF
+# pdf("All_Cluster_Averages_with_Limits_Colors.pdf")
+# for (p in plot_list) {
+#   print(p)
+# }
+# dev.off()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

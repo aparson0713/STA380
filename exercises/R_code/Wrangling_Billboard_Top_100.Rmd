@@ -1,0 +1,104 @@
+---
+title: "Wrangling_the_Billboard_Top_100"
+author: "Haden Loveridge, Alex Parson, Biagio Alessandrello"
+date: "2024-08-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part A)
+```{r part A, echo=FALSE, message=FALSE, warning= FALSE}
+# Load necessary libraries
+library(dplyr)
+library(readr)
+library(knitr)
+library(kableExtra)
+
+# Read the data from the CSV file
+billboard_data <- read_csv("~/Desktop/Machine_Learning_Intro/David_Puelz_SecondHalf/Excersises/data/billboard.csv")
+
+# Group by performer and song, then count the number of weeks each song appeared on the chart
+grouped_data <- billboard_data %>%
+  group_by(performer, song) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Sort the data in descending order by count
+sorted_data <- grouped_data %>%
+  arrange(desc(count))
+
+# Select the top 10 songs
+top_10_songs <- sorted_data %>%
+  slice_head(n = 10)
+
+# Create a caption for the table
+caption <- "This table shows the top ten most popular songs, measured by the total number of weeks a song was on the billboards top 100 songs from 1958 to 2021."
+
+# Display the table in a professional format
+top_10_songs %>%
+  kbl(caption = caption, col.names = c("Performer", "Song", "Count")) %>%
+  kable_styling(full_width = FALSE, position = "center", latex_options = "hold_position")
+```
+
+## Part B)
+```{r part B, echo=FALSE, message=FALSE, warning= FALSE}
+library(ggplot2)
+
+
+# Filter out the years 1958 and 2021
+filtered_data <- billboard_data %>%
+  filter(year != 1958 & year != 2021)
+
+# Count the number of unique songs that appeared on the Billboard Top 100 for each year
+diversity_data <- filtered_data %>%
+  group_by(year) %>%
+  summarise(unique_songs = n_distinct(song))
+
+# Create a line graph to plot the musical diversity over the years
+ggplot(diversity_data, aes(x = year, y = unique_songs)) +
+  geom_line(color = "blue") +
+  labs(title = "Musical Diversity of Billboard Top 100 Over Time",
+       x = "Year",
+       y = "Number of Unique Songs")+
+  theme_minimal()
+```
+This figure shows the number of unique songs that appeared in the Billboard Top 100 each year. It measures the musical diversity over time.
+
+## Part C)
+```{r part c, echo=FALSE, message=FALSE, warning= FALSE}
+library(forcats)
+
+# Identify songs that appeared on the Billboard Top 100 for at least ten weeks
+ten_week_hits <- billboard_data %>%
+  group_by(performer, song) %>%
+  summarise(weeks_on_chart = n()) %>%
+  filter(weeks_on_chart >= 10) %>%
+  ungroup()
+
+# Count the number of "ten-week hits" for each artist
+artist_hits <- ten_week_hits %>%
+  group_by(performer) %>%
+  summarise(ten_week_hits_count = n()) %>%
+  ungroup()
+
+# Select only those artists who have had at least 30 "ten-week hits"
+top_artists <- artist_hits %>%
+  filter(ten_week_hits_count >= 30)
+
+# Create a bar plot
+ggplot(top_artists, aes(x = fct_reorder(performer, ten_week_hits_count), y = ten_week_hits_count)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  coord_flip() +
+  labs(title = "Number of Ten-Week Hits by Artist",
+       x = "Artist",
+       y = "Number of Ten-Week Hits") +
+  theme_minimal()
+```
+**Caption:**  
+This plot shows the number of '10 week hits' an artist has had. A '10 week hit' is defined as a song that was in the top 100 for at least 10 weeks  
+There are 19 artist that have had at least 30 '10 week hit's, they are shown in descending order of number of '10 week hit's
+
+

@@ -1,0 +1,107 @@
+---
+title: "Capital Metro Assignment"
+author: "Haden Loveridge, Alex Parson, Biagio Alessandrello"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rpart)
+library(rpart.plot)
+```
+
+## Visual story telling part 2: Capital Metro data
+
+
+```{r, include=FALSE}
+# Load the data
+capmetro_data <- read.csv("/Users/biagio/Documents/GitHub/STA380/data/capmetro_UT.csv")
+
+# View the structure and summary of the data
+str(capmetro_data)
+cat("\n")
+summary(capmetro_data)
+
+# Inspect the first few rows
+head(capmetro_data)
+```
+
+```{r name, echo=FALSE, message=FALSE, warning= FALSE}
+library(dplyr)
+library(ggplot2)
+
+# Your data manipulation and plotting code
+result <- capmetro_data %>%
+  mutate(day = as.Date(timestamp)) %>% 
+  group_by(month, day) %>%
+  summarise(avg_temp = mean(temperature),
+            total_boarding = sum(boarding),
+            total_alighting = sum(alighting),
+            .groups = "drop_last") %>%
+  mutate(change = total_boarding - total_alighting) %>% 
+  mutate(avg_daily_error = change / total_boarding)
+
+result <- result %>% 
+  group_by(month) %>% 
+  summarise(avg_error = mean(avg_daily_error))
+
+# Plot the result
+ggplot(result, aes(x = factor(month), y = avg_error)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(title = "Average Error per Month",
+       x = "Month",
+       y = "Average Error") +
+  theme_minimal()
+```
+
+We see an interesting phenomenon when investing our total ridorship per day. In a perfect world these numbers should be the same, unless we have people sleeping on the bus. Our findings suggest that our optical scanner is prone to error and the above graph shows the average daily error by month. 
+
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+```{r,echo=FALSE}
+# Aggregate data by hour of day
+hourly_ridership <- capmetro_data %>%
+  group_by(hour_of_day) %>%
+  summarise(total_boarding = sum(boarding), total_alighting = sum(alighting))
+
+# Plot boarding and alighting patterns by hour of day
+ggplot(hourly_ridership, aes(x = hour_of_day)) +
+  geom_line(aes(y = total_boarding, color = "Boarding")) +
+  geom_line(aes(y = total_alighting, color = "Alighting")) +
+  labs(title = "Capital Metro Ridership by Hour of Day",
+       x = "Hour of Day",
+       y = "Number of Passengers",
+       color = "Activity") +
+  theme_minimal()
+```
+
+Following the error mentioned above you can see the difference between the alighting and the boarding through hours of the day. At the start you can see that the aligthing starts above the boarding showing the error In a perfect world these two lines should be almost identical but we can see that they are skewed or mirrored to each other. We came to the conclusion that some of this error and the peaks are due to the rush hour flow in the morning everyone getting on and in the evening everyone getting off. Another hypothesis especially in the early morning and late at night can be subject to lack of lighting.
+
+```{r activity by temp, echo=FALSE, message=FALSE, warning= FALSE}
+# Calculate total activity
+capmetro_data <- capmetro_data %>%
+  mutate(total_activity = boarding + alighting)
+
+# Create a new column for temperature buckets
+capmetro_data$temp_bucket <- cut(capmetro_data$temperature, breaks = seq(floor(min(capmetro_data$temperature)), ceiling(max(capmetro_data$temperature)), by = 5), right = FALSE)
+# Calculate the average total_activity per temperature bucket
+capmetro_avg_activity <- aggregate(total_activity ~ temp_bucket, data = capmetro_data, FUN = mean)
+# Create the histogram
+ggplot(capmetro_avg_activity, aes(x = temp_bucket, y = total_activity)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(x = "Temperature (°F)", y = "Average Total Activity", title = "Histogram of Average Total Activity by Temperature Bucket") +
+  theme_minimal()
+# Calculate the average total_activity per temperature bucket and month
+capmetro_avg_activity <- aggregate(total_activity ~ temp_bucket + month, data = capmetro_data, FUN = mean)
+# Create the histogram with faceting by month
+ggplot(capmetro_avg_activity, aes(x = temp_bucket, y = total_activity)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(x = "Temperature (°F)", y = "Average Total Activity", title = "Histogram of Average Total Activity by Temperature Bucket and Month") +
+  theme_minimal() +
+  facet_wrap(~ month, ncol = 3) # ncol controls the number of columns in the grid
+```
+
+Total activity is measured as the sum of people boarding and alighting. When we compare total activity strictly across temperature, we see little change. When we then break apart temperature by month, we then see increased activity in the lows and highs of the temperature. This can be due to people's difference in tolerance of temperature according to the month, motivating them to ride the bus more during those peak temperatures.
