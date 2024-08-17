@@ -1,0 +1,156 @@
+---
+title: "Green Building"
+author: "Alex Parson, Biagio Alessandrello, Haden Loveridge"
+date: "2024-08-16"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, include=FALSE, warning=FALSE}
+rm(list = ls())
+library("tidyverse")
+library("dplyr")
+library("ggplot2")
+
+# Read the file
+df <- read.csv("/Users/alexparson/Documents/UT MSBA 2025/STA 380/Unsupervised Learning/greenbuildings.csv")
+
+```
+
+
+
+## Original Analysis
+Our Excel Guru's original analysis provided the following results, where our average rent for Green Buildings is $27.6 and for non-Green Buildings is $25.
+
+
+``` {r, echo=FALSE, message=FALSE, warning=FALSE}
+
+df <- df %>% filter(leasing_rate > .1)
+
+result <- df %>%
+  group_by(green_rating, .groups = "drop_last") %>%
+  summarise( average_occupancy = median(leasing_rate),
+             average_size = median(size),
+             Med_Rent = median(Rent),
+             med_cluster = median(cluster_rent))
+
+ggplot(result, aes(x = factor(green_rating), y = Med_Rent, fill = factor(green_rating))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Med_Rent), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5) +
+  scale_fill_manual(values = c("blue", "orange")) +
+  labs(title = "Median Rent by Green Rating",
+       x = "Net",
+       y = "Median Rent",
+       fill = "Green Rating") +
+  theme_minimal()
+```
+
+
+## Analyzing Confouding Variables
+
+While this is a decent initial approach, we have the presence of confounding variables that makes this an incorrect analysis. The most problematic is the 'net' variable, which indicates that some rents include utilities and some rents exclude utilities. We want to ensure that we are comparing similar rents across building types. When we compare buildings of similar rent type we notice a higher median rent for Green Buildings when utilities are included in the rental cost, but almost no difference when utilities are excluded. 
+
+``` {r, echo=FALSE, warning=FALSE}
+result <- df %>%
+  group_by(net, green_rating) %>%
+  summarise( average_occupancy = median(leasing_rate),
+             average_size = median(size),
+             Med_Rent = median(Rent),
+             med_cluster = median(cluster_rent),
+             .groups = "keep")
+
+ggplot(result, aes(x = factor(net), y = Med_Rent, fill = factor(green_rating))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Med_Rent), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5) +
+  scale_fill_manual(values = c("blue", "orange")) +
+  labs(title = "Median Rent by Net and Green Rating",
+       x = "Net",
+       y = "Median Rent",
+       fill = "Green Rating") +
+  theme_minimal()
+```
+
+## Additional Confounding Variables
+
+Other confounding variables include class, size, and age. Our new building will be around 250,000 square feet, so we will only want to look at buildings of a similar size. Additionally, we want to compare buildings of a similar quality (through the class variable). 
+
+When we compare similar buildings, we actually see higher rents for non-green buildings. 
+``` {r, echo=FALSE, warning=FALSE}
+result <- df %>%
+  filter(class_a == 1,
+         size >= 200000 & size <= 300000) %>% 
+  group_by(net, green_rating, .groups = "drop_last") %>%
+  summarise( average_occupancy = median(leasing_rate),
+             average_size = median(size),
+             Med_Rent = median(Rent),
+             med_cluster = median(cluster_rent)
+            )
+
+ggplot(result, aes(x = factor(net), y = Med_Rent, fill = factor(green_rating))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Med_Rent), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5) +
+  scale_fill_manual(values = c("blue", "orange")) +
+  labs(title = "Class_a Median Rent by Net and Green Rating",
+       x = "Net",
+       y = "Median Rent",
+       fill = "Green Rating") +
+  theme_minimal()
+
+result <- df %>%
+  filter(class_b == 1,
+         size >= 200000 & size <= 300000) %>% 
+  group_by(net, green_rating, .groups = "drop_last") %>%
+  summarise( average_occupancy = median(leasing_rate),
+             average_size = median(size),
+             Med_Rent = median(Rent),
+             med_cluster = median(cluster_rent)
+  )
+
+ggplot(result, aes(x = factor(net), y = Med_Rent, fill = factor(green_rating))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Med_Rent), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5) +
+  scale_fill_manual(values = c("blue", "orange")) +
+  labs(title = "Class_b Median Rent by Net and Green Rating",
+       x = "Net",
+       y = "Median Rent",
+       fill = "Green Rating") +
+  theme_minimal()
+```
+
+Lastly, we also noticed that green buildings tend to be newer buildings. Therefore, we want to compare buildings of similar age. 
+
+We see a similar outcome, that non-green buildings have higher median rents. This indicates that our original analysis by the Excel Guru was wrong, and under our current revenue/cost structure it will be more profitable to build a non-green building. 
+
+
+``` {r, echo=FALSE, warning=FALSE}
+result <- df %>%
+  filter(age < 26,
+         size >= 200000 & size <= 300000) %>% 
+  group_by(net, green_rating, .groups = "drop_last") %>%
+  summarise( average_occupancy = median(leasing_rate),
+             average_size = median(size),
+             Med_Rent = median(Rent),
+             med_cluster = median(cluster_rent)
+  )
+
+ggplot(result, aes(x = factor(net), y = Med_Rent, fill = factor(green_rating))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Med_Rent), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5) +
+  scale_fill_manual(values = c("blue", "orange")) +
+  labs(title = " Newer Buildings Median Rent by Net and Green Rating",
+       x = "Net",
+       y = "Median Rent",
+       fill = "Green Rating") +
+  theme_minimal()
+```
