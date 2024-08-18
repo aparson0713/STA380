@@ -1,0 +1,158 @@
+---
+title: "Clustering and Dimensionality Reduction"
+author: "Haden Loveridge, Alex Parson, Biagio Alessandrello"
+date: "2024-08-12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+library(dplyr)
+library(knitr)
+```
+
+## Clustering and dimensionality reduction  
+
+
+### PCA
+
+
+```{r, include=FALSE, warning=FALSE, error=FALSE}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(caret)
+library(Rtsne)
+library(cluster)
+library(factoextra)
+
+# Load the data
+wine_data <- read.csv("wine.csv")
+
+# View the structure of the data
+str(wine_data)
+```
+
+```{r, include=FALSE}
+# Check for missing values
+sum(is.na(wine_data))
+
+# Standardize the chemical properties for PCA and t-SNE
+wine_data_scaled <- scale(wine_data[, 1:11])
+
+# Add wine type (red/white) and quality back to the standardized data for plotting purposes
+wine_data_scaled <- as.data.frame(wine_data_scaled)
+wine_data_scaled$color <- wine_data$color
+wine_data_scaled$quality <- wine_data$quality
+```
+
+```{r, echo=FALSE}
+# Perform PCA
+pca_result <- prcomp(wine_data_scaled[, 1:11], scale. = TRUE)
+
+# Summary of PCA
+summary(pca_result)
+
+# Plot PCA
+pca_data <- as.data.frame(pca_result$x)
+pca_data$color <- wine_data$color
+pca_data$quality <- wine_data$quality
+
+# Color
+ggplot(pca_data, aes(x = PC1, y = PC2, color = color)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "PCA of Wine Data - Color",
+       x = "Principal Component 1",
+       y = "Principal Component 2")
+
+# Quality
+ggplot(pca_data, aes(x = PC1, y = PC2, color = quality)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "PCA of Wine Data - Quality",
+       x = "Principal Component 1",
+       y = "Principal Component 2")
+```
+
+PCA does a good job at seperating with wine color but does not do a good job with quality.
+
+
+### tSNE
+
+```{r, echo=FALSE}
+# Remove duplicate rows
+wine_data_unique <- wine_data[!duplicated(wine_data[, 1:11]), ]
+
+# Standardize the chemical properties for PCA and t-SNE
+wine_data_scaled_unique <- scale(wine_data_unique[, 1:11])
+
+# Add wine type (red/white) and quality back to the standardized data for plotting purposes
+wine_data_scaled_unique <- as.data.frame(wine_data_scaled_unique)
+wine_data_scaled_unique$color <- wine_data_unique$color
+wine_data_scaled_unique$quality <- wine_data_unique$quality
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Perform t-SNE on the unique data
+tsne_result <- Rtsne(wine_data_scaled_unique[, 1:11], dims = 2, perplexity = 50, verbose = TRUE, max_iter = 500)
+
+# Prepare t-SNE data for plotting
+tsne_data <- as.data.frame(tsne_result$Y)
+colnames(tsne_data) <- c("Dim1", "Dim2")
+tsne_data$color <- wine_data_scaled_unique$color
+tsne_data$quality <- wine_data_scaled_unique$quality
+
+# Plot t-SNE Color
+ggplot(tsne_data, aes(x = Dim1, y = Dim2, color = color)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "t-SNE of Wine Data",
+       x = "Dimension 1",
+       y = "Dimension 2")
+
+# Plot t-SNE Quality
+ggplot(tsne_data, aes(x = Dim1, y = Dim2, color = quality)) +
+  geom_point(alpha = 0.9) +
+  labs(title = "t-SNE of Wine Data",
+       x = "Dimension 1",
+       y = "Dimension 2")
+```
+
+
+### Visual Inspection
+
+Looking at both PCA and t-SNE, They are both doing a great job at distinguishing between the colors of wine but you can tell that t-SNE was able to distinguish the two wine colors more effectively than PCA visually. On the quality side of things it is more difficult to tell as the qualities seem to be more spread out through both plots but you can see an iteresting pattern on the quality plot.It is not too visible but in this plot you can see that the high quality colors show high at the top of the white wine and high at the bottom of the red wine side. 
+
+### Explained Variance (PCA Only)
+
+It takes PCA reaching 4 components before it reaches and acceptable capture of the structure of data.
+
+
+```{r, echo=FALSE}
+library(cluster)
+
+# Clustering with PCA results
+kmeans_pca <- kmeans(pca_data[, 1:2], centers = 2)  # Assuming 2 clusters for red and white
+silhouette_pca <- silhouette(kmeans_pca$cluster, dist(pca_data[, 1:2]))
+avg_silhouette_pca <- mean(silhouette_pca[, 3])  # Average silhouette score for PCA
+
+# Clustering with t-SNE results
+kmeans_tsne <- kmeans(tsne_data[, 1:2], centers = 2)  # Assuming 2 clusters for red and white
+silhouette_tsne <- silhouette(kmeans_tsne$cluster, dist(tsne_data[, 1:2]))
+avg_silhouette_tsne <- mean(silhouette_tsne[, 3])  # Average silhouette score for t-SNE
+
+# Compare the scores
+cat("Average Silhouette Score for PCA: ", avg_silhouette_pca, "\n")
+cat("Average Silhouette Score for t-SNE: ", avg_silhouette_tsne, "\n")
+```
+
+PCA is showing a higher Average Silhouette making it a more effective model by this metric
+
+### Visual Clarity in Differentiating Labels
+
+After looking at color seperation, it looks like both the PCA and the t-SNE have done a great job at separating out visually for the color of wine. In the quality part they are both not doing so great.
+
+
+
