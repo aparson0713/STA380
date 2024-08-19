@@ -51,6 +51,6 @@ Here is the [code](exercises/R_code/Association_Rule_Mining.Rmd) for problem 7.
 
 Here is the [pdf solution](exercises/PDFs/Image_Classification_Neural_Nets.pdf) for problem 8.
 
-
+Here is the [code](exercises/R_code/Image_Classification_Neural_Nets.ipynb) for problem 8.
 
 
