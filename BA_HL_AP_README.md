@@ -43,6 +43,10 @@ Here is the [code](aparson0713/STA380/exercises/R_code/Reuters_Alex.ipynb) for p
 
 ## Problem 7: Association rule mining
 
+Here is the [pdf solution](exercises/PDFs/Association_Rule_Mining.pdf) for problem 7.
+
+Here is the [code](exercises/R_code/Association_Rule_Mining.Rmd) for problem 7.
+
 
 
 
