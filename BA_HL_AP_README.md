@@ -33,5 +33,10 @@ Here is the [code](exercises/R_code/clustering_dimensionality_reduction.Rmd) for
 
 Here is the [pdf solution](exercises/PDFs/Market_Segmentation (1).pdf) for problem 5.
 
-Here is the [code](exercises/R_code/Market_Segmentatoon (1).Rmd) for problem 5. 
+Here is the [code](exercises/R_code/Market_Segmentation (1).Rmd) for problem 5. 
+
+## Problem 6: The Reuters corpus
+
+Here is the [pdf solution](exercises/PDFs/Reuters Write Up.pdf) for problem 6. 
+
 
