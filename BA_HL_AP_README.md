@@ -39,7 +39,7 @@ Here is the [code](exercises/R_code/Market_Segmentation_(1).Rmd) for problem 5.
 
 Here is the [pdf solution](exercises/PDFs/Reuters_Write_Up.pdf) for problem 6. 
 
-Here is the [code](aparson0713/STA380/exercises/R_code/Reuters_Alex.ipynb) for problem 6
+Here is the [code](exercises/R_code/Reuters_Alex.ipynb) for problem 6.
 
 ## Problem 7: Association rule mining
 
