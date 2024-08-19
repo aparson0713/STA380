@@ -1,0 +1,191 @@
+---
+title: "Association Rule Mining"
+author: "Haden Loveridge, Alex Parson, Biagio Alessandrello"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(error = TRUE)
+```
+## Loading txt File for Analysis:  
+The 'arules' package we used expects data in the form of 'transactions' to do this, we used 'read.transactions' from the arules package. This differs from the example in the playlists.R file where each record was a single pair of artists and we had to then create baskets.
+``` {r loading data, include=FALSE}
+library(arules)
+library(arulesViz)
+
+# Load the data
+groceries <- read.transactions("~/Desktop/Machine_Learning_Intro/David_Puelz_SecondHalf/Excersises/data/groceries.txt", format = "basket", sep = ",")
+```
+
+## Rules Parameters:  
+For our rules we chose to have the following parameters:  
+
+* **Support = 0.001**  
+  - We chose a level this low compared to the default because we were open to looking at very niche transactions that only occur in as few as 0.1% of all transactions.  
+
+* **Confidence = 0.05**  
+  - Again, we lowered the confidence compared to the default that allowed the subsequent rules to be true only 5% of the time.  
+
+* **maxlen = 6**  
+  - We did limit the max length of a rule because when there was no limit we saw few interesting results and few large lifts. In a shopping list, few recipes, events, or late night cravings would include groups of items greater than 6 unless they were independent of one another.
+
+```{r Mining Association, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Apply the Apriori algorithm
+rules <- apriori(groceries, parameter = list(supp = 0.001, conf = 0.05, maxlen = 6))
+
+# # Summary of the rules
+# summary(rules)
+# 
+# Inspect the top 5 rules sorted by lift
+inspect(sort(rules, by = "lift")[1:5])
+# 
+# # Subset the rules for interesting ones (e.g., lift > 3)
+# interesting_rules <- subset(rules, subset = lift > 3)
+# inspect(interesting_rules)
+```
+
+```{r highest and lowest lifts, echo=FALSE, message=FALSE, warning= FALSE, include = FALSE}
+# Sort the rules by lift
+rules_sorted_by_lift <- sort(rules, by = "lift")
+
+# Extract the bottom 5 rules with the lowest lift
+bottom_5_low_lift <- tail(rules_sorted_by_lift, 5)
+
+# Extract the bottom 5 rules with the lowest lift
+top_5_high_lift <- tail(rules_sorted_by_lift, 5)
+```
+
+
+## Highest & Lowest Lift:  
+From the two tables bellow we can see the top 5 and lowest 5 'Lift' from our rules. In other words, the rule combination of 'If a person buys 1) Bottled Beer, and 2) red/blush Win, then they are 35.7 times more likely to also purchase Liquor. That would make sense since if a person is buying both beer and wine they are buying liquor for parties and other celebrations.  
+
+On the low end, of the 5 lowest lifts, 4 of them also included Bottled Beer. When a person buys Botted beer they are less than half as likely to also purchase yogurt, veggies, or whole milk. This scenario also makes sense if you consider that if you are buying whole milk and yogurt you are likely shopping for toddlers (who likely arent drinking a Miller Lite).
+
+```{r highest-and-lowest-lifts-output, echo=FALSE, message=FALSE, warning=FALSE}
+library(magrittr)
+library(knitr)
+library(kableExtra)
+
+# Ensure top_5_high_lift is created as a set of rules and not a data frame
+if (inherits(top_5_high_lift, "rules") && length(top_5_high_lift) > 0) {
+  # Convert the rules into a data frame for better formatting
+  top_5_high_lift_df <- data.frame(
+    Antecedent = labels(lhs(top_5_high_lift)),
+    Consequent = labels(rhs(top_5_high_lift)),
+    Support = quality(top_5_high_lift)$support,
+    Confidence = quality(top_5_high_lift)$confidence,
+    Coverage = quality(top_5_high_lift)$coverage,
+    Lift = quality(top_5_high_lift)$lift,
+    Count = quality(top_5_high_lift)$count
+  )
+
+  # Create a formatted table
+  kable(top_5_high_lift_df, caption = "Top 5 Rules by Lift") %>%
+    kable_styling(full_width = FALSE, position = "center")
+} else {
+  cat("No rules found for the highest lift or top_5_high_lift is not a rules object.")
+}
+
+# Ensure bottom_5_low_lift is created as a set of rules and not a data frame
+if (inherits(bottom_5_low_lift, "rules") && length(bottom_5_low_lift) > 0) {
+  # Convert the rules into a data frame for better formatting
+  bottom_5_low_lift_df <- data.frame(
+    Antecedent = labels(lhs(bottom_5_low_lift)),
+    Consequent = labels(rhs(bottom_5_low_lift)),
+    Support = quality(bottom_5_low_lift)$support,
+    Confidence = quality(bottom_5_low_lift)$confidence,
+    Coverage = quality(bottom_5_low_lift)$coverage,
+    Lift = quality(bottom_5_low_lift)$lift,
+    Count = quality(bottom_5_low_lift)$count
+  )
+
+  # Create a formatted table
+  kable(bottom_5_low_lift_df, caption = "Bottom 5 Rules by Lift") %>%
+    kable_styling(full_width = FALSE, position = "center")
+} else {
+  cat("No rules found for the lowest lift or bottom_5_low_lift is not a rules object.")
+}
+
+```
+
+## Visual of 'Vegetable Rules'  
+The graph below shows the 3 highest and 3 lowest lift metrics for any rule that has vegetables as the antecedent.   
+```{r Plotting yogurt, echo=FALSE, message=FALSE, warning= FALSE}
+# Subset rules where "vegetables" (or a specific type of vegetable) is in the antecedent
+vegetable_rules <- subset(rules, lhs %pin% "vegetables")
+
+# Sort the vegetable rules by lift
+vegetable_rules_sorted_by_lift <- sort(vegetable_rules, by = "lift")
+
+# Extract the top 3 and bottom 3 lifts
+top_3_lift_vegetables <- head(vegetable_rules_sorted_by_lift, 3)
+bottom_3_lift_vegetables <- tail(vegetable_rules_sorted_by_lift, 3)
+
+# Combine the top 3 and bottom 3 into one set
+selected_vegetable_rules <- c(top_3_lift_vegetables, bottom_3_lift_vegetables)
+
+# Create a dataframe from the selected vegetable rules
+vegetable_lift_df <- data.frame(
+  Rule = paste(labels(lhs(selected_vegetable_rules)), "=>", labels(rhs(selected_vegetable_rules))),
+  Lift = quality(selected_vegetable_rules)$lift
+)
+
+# Load ggplot2 for plotting
+library(ggplot2)
+library(stringr)  # For text wrapping
+
+# Wrap the Rule text to fit within the plot
+vegetable_lift_df$Rule <- str_wrap(vegetable_lift_df$Rule, width = 30)
+
+# Create the bar plot with customized y-axis labels
+ggplot(vegetable_lift_df, aes(x = reorder(Rule, Lift), y = Lift)) +
+  geom_bar(stat = "identity", fill = "lightgreen") +
+  coord_flip() +  # Flip coordinates for readability
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red") +  # Add a horizontal line at y = 1
+  scale_y_continuous(breaks = seq(0, max(vegetable_lift_df$Lift), by = 5),  # Show every 5th mark
+                     labels = scales::comma) +  # Format y-axis labels
+  labs(title = "Lift of Association Rules with Vegetables",
+       x = "Association Rule",
+       y = "Lift") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 8),  # Reduce the size of the y-axis text
+        plot.margin = margin(1, 1, 1, 1, "cm"))  # Adjust plot margins
+
+```
+
+## Visual of Rules:
+The final plot shows the relation ship of 'Lift' on the Y axis (increased/decreased likelihood of purchase given another item), 'Support' on the X axis (% of transactions containing item), and 'Confidence' as the darkenss of the data point (ratio of both items compared to a given item).
+```{r Plotting, echo=FALSE, message=FALSE, warning= FALSE}
+plot(rules, method = "scatterplot", measure = c("support", "lift"), shading = "confidence")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
