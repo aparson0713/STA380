@@ -13,9 +13,9 @@ Here is the [code](exercises/R_code/Wrangling_Billboard_Top_100.Rmd) for problem
 
 ## Problem 3: Visual story telling part 1: green buildings
 
-Here is the [pdf solution](exercises/PDFs/Green Buildings.pdf) for problem 3 part 1. 
+Here is the [pdf solution](exercises/PDFs/Green_Buildings.pdf) for problem 3 part 1. 
 
-Here is the [code](exercises/R_code/Green Buildings.Rmd) for problem 3 part 1. 
+Here is the [code](exercises/R_code/Green_Buildings.Rmd) for problem 3 part 1. 
 
 ## Problem 3: Visual story telling part 2: Capital Metro data
 
@@ -31,12 +31,18 @@ Here is the [code](exercises/R_code/clustering_dimensionality_reduction.Rmd) for
 
 ## Problem 5: Market segmentation
 
-Here is the [pdf solution](exercises/PDFs/Market_Segmentation (1).pdf) for problem 5.
+Here is the [pdf solution](exercises/PDFs/Market_Segmentation_(1).pdf) for problem 5. 
 
-Here is the [code](exercises/R_code/Market_Segmentation (1).Rmd) for problem 5. 
+Here is the [code](exercises/R_code/Market_Segmentation_(1).Rmd) for problem 5. 
 
 ## Problem 6: The Reuters corpus
 
-Here is the [pdf solution](exercises/PDFs/Reuters Write Up.pdf) for problem 6. 
+Here is the [pdf solution](exercises/PDFs/Reuters_Write_Up.pdf) for problem 6. 
+
+Here is the [code](aparson0713/STA380/exercises/R_code/Reuters_Alex.ipynb) for problem 6
+
+## Problem 7: Association rule mining
+
+
 
 
