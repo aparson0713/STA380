@@ -47,6 +47,10 @@ Here is the [pdf solution](exercises/PDFs/Association_Rule_Mining.pdf) for probl
 
 Here is the [code](exercises/R_code/Association_Rule_Mining.Rmd) for problem 7.
 
+## Problem 8: Image classification with neural networks
+
+Here is the [pdf solution](exercises/PDFs/Image_Classification_Neural_Nets.pdf) for problem 8.
+
 
 
 
